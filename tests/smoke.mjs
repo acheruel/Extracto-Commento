@@ -36,7 +36,7 @@ try {
   assert.equal(await page.getByText('DU PDF AU TABLEAU, SIMPLEMENT').count(),0);
   assert.match(await page.locator('.privacy').innerText(),/100 % local[\s\S]*Aucun document n’est envoyé en ligne/);
   assert.equal(await page.locator('footer time').getAttribute('datetime'),'2026-10-03');
-  assert.equal(await page.locator('.github-link').getAttribute('href'),'https://github.com/ACFakkoh/Extracto-Commento');
+  assert.equal(await page.locator('.github-link').getAttribute('href'),'https://github.com/acheruel/Extracto-Commento');
   await page.screenshot({ path:path.join(root,'tests','output','start.png'),fullPage:true });
   await openFile('annotations.pdf');
   assert.equal(await page.locator('#count').innerText(),'8');
