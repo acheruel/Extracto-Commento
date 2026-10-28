@@ -2,7 +2,7 @@ import { LABELS, TYPES, DISCLAIMERS, commentText, pdfDate, exportRows } from './
 
 const COPY = {
   fr: {
-    language:'Langue', lead:'Vos commentaires PDF, prêts pour Excel. Extrayez, vérifiez et téléchargez.',
+    lead:'Vos commentaires PDF, prêts pour Excel. Extrayez, vérifiez et téléchargez.',
     privacy:'Traitement 100 % local', privacyDetail:'Aucun document n’est envoyé en ligne. Vos PDF restent sur votre appareil.',
     step1:'Choisir les PDF', step2:'Vérifier les commentaires', step3:'Télécharger Excel',
     modeLabel:'Mode d’extraction', singleMode:'Un PDF', batchMode:'Plusieurs PDF → un Excel',
@@ -13,7 +13,8 @@ const COPY = {
     documentList:'PDF du lot', batchCancelled:'Analyse annulée. Les PDF déjà terminés restent disponibles; les autres fichiers sont signalés comme non extraits.',
     dropTitle:'Déposez votre PDF ici', dropHint:'ou choisissez un fichier sur votre appareil', choose:'Choisir un PDF', demo:'Essayer un exemple',
     uploadNote:'Un PDF à la fois · notes, zones de texte, surlignages, textes barrés et lignes', clear:'Effacer / changer', cancel:'Annuler',
-    preview:'PRÉVISUALISATION', resultsTitle:'Vérifiez vos commentaires', statComments:'commentaires exportables', statPages:'pages analysées', statAuthors:'auteurs',
+    preview:'PRÉVISUALISATION', resultsTitle:'Vérifiez vos commentaires', statComments: count => count < 2 ? 'commentaire exportable' : 'commentaires exportables',
+    statPages: count => count < 2 ? 'page analysée' : 'pages analysées', statAuthors: count => count < 2 ? 'auteur' : 'auteurs',
     searchLabel:'Recherche', searchPlaceholder:'Rechercher un commentaire…', authorLabel:'Auteur', typeLabel:'Type', pageLabel:'Page PDF',
     allAuthors:'Tous les auteurs', allTypes:'Tous les types', allPages:'Toutes les pages', resetFilters:'Réinitialiser les filtres',
     pageHeading:'Page', dateHeading:'Date', commentHeading:'Commentaire', previous:'Précédent', next:'Suivant',
@@ -26,7 +27,7 @@ const COPY = {
     helpLimits:'Les annotations aplaties dans une image ne peuvent pas être récupérées. Les PDF protégés par mot de passe doivent être déverrouillés au préalable. Les propriétés spécifiques à un éditeur peuvent ne pas être disponibles.',
     helpVolume:'Cible : jusqu’à 300 Mo et 500 pages sur ordinateur. La consommation mémoire et le temps dépendent du document et de votre appareil. Le fichier est lu par portions; seules les pages utiles sont analysées pour le texte couvert.',
     helpExport:'Le navigateur choisit le dossier de téléchargement. Excel comporte No, Page, Auteur, Date et Commentaire. En mode plusieurs PDF, une colonne Fichier et un onglet Fichiers identifient les sources et leur état. Effacer libère les références de cette session, sans garantir un effacement sécurisé de la mémoire.',
-    updated:'Dernière mise à jour :', updatedDate:'3 octobre 2026', github:'Code source sur GitHub',
+    updated:'Dernière mise à jour :', updatedDate:'28 octobre 2026', github:'Code source sur GitHub',
     loading:'Chargement de l’outil…', ready:'Prêt à ouvrir vos PDF.',
     opening:'Lecture du PDF…', complete:'Extraction terminée. Vérifiez le tableau avant de télécharger.',
     empty:'Aucun commentaire exportable trouvé. Consultez les informations d’extraction; les annotations peuvent être absentes, exclues ou aplaties.',
@@ -39,7 +40,7 @@ const COPY = {
     dependencies:'Impossible de charger l’outil. Lancez Lancer.cmd puis ouvrez http://127.0.0.1:8765 dans un navigateur récent.',
     longCell:'Un commentaire dépasse la limite Excel de 32 767 caractères. Aucun texte n’a été tronqué; l’export est bloqué.',
     exportError:'Impossible de générer Excel. Les commentaires restent disponibles dans le tableau.',
-    noMatch:'Aucun commentaire ne correspond aux filtres.', estimated:'Texte estimé', reply:'Réponse',
+    noMatch:'Aucun commentaire ne correspond aux filtres.', reply:'Réponse',
     warnings:'Informations d’extraction', filtered:'commentaires affichés sur', total:'au total',
     excludedHighlights:'surlignage(s) sans note exclus, comme en 0.6.', excludedLines:'ligne(s) sans contenu exclues, comme en 0.6.',
     unsupported:'Annotation(s) hors périmètre', failedPages:'Pages non analysées', textFailures:'Pages dont le texte couvert est illisible',
@@ -51,7 +52,7 @@ const COPY = {
     duration: seconds => `Analyse en ${seconds} s`, meta:(size,pages) => `${size}${pages ? ` · ${pages} ${pages === 1 ? 'page' : 'pages'}` : ''}`,
   },
   en: {
-    language:'Language', lead:'Your PDF comments, ready for Excel. Extract, review and download.',
+    lead:'Your PDF comments, ready for Excel. Extract, review and download.',
     privacy:'100% local processing', privacyDetail:'No documents are sent online. Your PDFs stay on your device.',
     step1:'Choose PDFs', step2:'Review comments', step3:'Download Excel',
     modeLabel:'Extraction mode', singleMode:'One PDF', batchMode:'Multiple PDFs → one Excel',
@@ -62,7 +63,8 @@ const COPY = {
     documentList:'Batch PDFs', batchCancelled:'Analysis cancelled. Completed PDFs remain available; other files are listed as not extracted.',
     dropTitle:'Drop your PDF here', dropHint:'or choose a file from your device', choose:'Choose a PDF', demo:'Try an example',
     uploadNote:'One PDF at a time · notes, text boxes, highlights, strikeouts and lines', clear:'Clear / change', cancel:'Cancel',
-    preview:'PREVIEW', resultsTitle:'Review your comments', statComments:'exportable comments', statPages:'pages analysed', statAuthors:'authors',
+    preview:'PREVIEW', resultsTitle:'Review your comments', statComments: count => count === 1 ? 'exportable comment' : 'exportable comments',
+    statPages: count => count === 1 ? 'page analysed' : 'pages analysed', statAuthors: count => count === 1 ? 'author' : 'authors',
     searchLabel:'Search', searchPlaceholder:'Search comments…', authorLabel:'Author', typeLabel:'Type', pageLabel:'PDF page',
     allAuthors:'All authors', allTypes:'All types', allPages:'All pages', resetFilters:'Reset filters',
     pageHeading:'Page', dateHeading:'Date', commentHeading:'Comment', previous:'Previous', next:'Next',
@@ -75,7 +77,7 @@ const COPY = {
     helpLimits:'Annotations flattened into an image cannot be recovered. Password-protected PDFs must be unlocked beforehand. Editor-specific properties may not be available.',
     helpVolume:'Target: up to 300 MB and 500 pages on desktop. Memory and time depend on the document and device. The file is read in chunks; marked text is extracted only on relevant pages.',
     helpExport:'Your browser controls the download folder. Excel includes No, Page, Author, Date and Comment. Multiple PDF mode adds a File column and a Files sheet with each source and its status. Clear releases this session’s references, without guaranteeing secure memory erasure.',
-    updated:'Last updated:', updatedDate:'October 3, 2026', github:'Source code on GitHub',
+    updated:'Last updated:', updatedDate:'October 28, 2026', github:'Source code on GitHub',
     loading:'Loading the tool…', ready:'Ready to open your PDFs.',
     opening:'Reading the PDF…', complete:'Extraction complete. Review the table before downloading.',
     empty:'No exportable comments found. Check the extraction information; annotations may be absent, excluded or flattened.',
@@ -88,7 +90,7 @@ const COPY = {
     dependencies:'Unable to load the tool. Run Lancer.cmd and open http://127.0.0.1:8765 in a recent browser.',
     longCell:'A comment exceeds Excel’s 32,767-character cell limit. No text was truncated; export is blocked.',
     exportError:'Unable to generate Excel. The comments remain available in the table.',
-    noMatch:'No comments match these filters.', estimated:'Estimated text', reply:'Reply', warnings:'Extraction information',
+    noMatch:'No comments match these filters.', reply:'Reply', warnings:'Extraction information',
     filtered:'comments shown out of', total:'total', excludedHighlights:'highlight(s) without notes excluded, as in 0.6.',
     excludedLines:'line(s) without content excluded, as in 0.6.', unsupported:'Unsupported annotation(s)',
     failedPages:'Unreadable pages', textFailures:'Pages with unreadable marked text', missingText:'mark(s) with no recoverable covered text. Any associated note is retained.',
@@ -101,7 +103,9 @@ const COPY = {
 };
 
 const $ = id => document.getElementById(id);
+const LANGUAGE_KEY = 'extracto-commento-language';
 let lang = navigator.language?.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+try { const saved = localStorage.getItem(LANGUAGE_KEY); if (saved === 'fr' || saved === 'en') lang = saved; } catch {}
 let result = null;
 let mode = 'single', documents = [];
 let fileName = '', fileSize = 0, tablePage = 1;
@@ -125,7 +129,7 @@ function setBusy(value) {
   $('choose').disabled = !canAdd();
   $('demo').disabled = value || !libraryReady;
   $('file').disabled = !canAdd();
-  $('language').disabled = value;
+  for (const button of $('language').querySelectorAll('button')) button.disabled = value;
   $('import-mode').disabled = value;
   $('progress-card').hidden = !value;
   updateDownload();
@@ -166,7 +170,8 @@ function updateMode() {
 function sourceDetail(source) {
   if (source.error) return t(source.error);
   if (!source.result) return '';
-  return `${t('meta')(displaySize(source.size),source.result.pages)} · ${source.result.records.length} ${t('statComments')}`;
+  const count = source.result.records.length;
+  return `${t('meta')(displaySize(source.size),source.result.pages)} · ${count} ${t('statComments')(count)}`;
 }
 
 function sourceStatus(source) {
@@ -245,18 +250,12 @@ function renderTable() {
     const values = [['number',record.no],...(mode === 'batch' ? [['source',record.sourceName]] : []),['page',record.page],['author',record.author || LABELS[lang].unknown],['date',pdfDate(record.modified,lang)],['type',LABELS[lang][record.type]]];
     for (const [kind,value] of values) {
       const cell = document.createElement('td'); cell.className = `${kind}-cell`; cell.textContent = value; row.append(cell);
+      if (kind === 'author' && value.length > 28) cell.classList.add('long');
     }
     const cell = document.createElement('td'); cell.className = 'comment-cell';
-    const text = commentText(record,lang);
-    if (text.length > 260) {
-      const details = document.createElement('details'); details.className = 'comment-details';
-      const summary = document.createElement('summary'); summary.textContent = `${text.slice(0,210)}…`;
-      const full = document.createElement('p'); full.textContent = text;
-      details.append(summary,full); cell.append(details);
-    } else { const copy = document.createElement('p'); copy.className = 'comment-copy'; copy.textContent = text; cell.append(copy); }
-    for (const [show,label] of [[record.estimated,'estimated'],[record.reply,'reply']]) {
-      if (show) { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = t(label); cell.append(tag); }
-    }
+    // Long comments stay fully visible; estimated text is flagged once in the extraction information.
+    const copy = document.createElement('p'); copy.className = 'comment-copy'; copy.textContent = commentText(record,lang); cell.append(copy);
+    if (record.reply) { const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = t('reply'); cell.append(tag); }
     row.append(cell); fragment.append(row);
   }
   if (!records.length) {
@@ -291,9 +290,11 @@ function renderDiagnostics() {
 }
 
 function renderResults() {
-  $('count').textContent = result.records.length;
-  $('pages').textContent = result.pages - result.failedPages.length;
-  $('authors').textContent = new Set(result.records.map(record => record.author)).size;
+  const stats = { count:result.records.length, pages:result.pages - result.failedPages.length,
+    authors:new Set(result.records.map(record => record.author)).size };
+  for (const [id,key] of [['count','statComments'],['pages','statPages'],['authors','statAuthors']]) {
+    $(id).textContent = stats[id]; $(`${id}-label`).textContent = t(key)(stats[id]);
+  }
   $('elapsed').textContent = t('duration')((result.elapsedMs/1000).toFixed(1));
   $('filemeta').textContent = t('meta')(displaySize(fileSize),result.pages);
   buildFilters(); renderDiagnostics(); renderTable(); updateDownload();
@@ -302,11 +303,13 @@ function renderResults() {
 function translate() {
   document.documentElement.lang = lang;
   document.title = lang === 'fr' ? 'Extracto Commento — PDF vers Excel' : 'Extracto Commento — PDF to Excel';
-  $('language').value = lang;
+  for (const button of $('language').querySelectorAll('button')) {
+    const selected = button.dataset.lang === lang;
+    button.classList.toggle('selected',selected); button.setAttribute('aria-pressed',String(selected));
+  }
   document.querySelectorAll('[data-i18n]').forEach(element => element.textContent = t(element.dataset.i18n));
   document.querySelectorAll('[data-placeholder]').forEach(element => element.placeholder = t(element.dataset.placeholder));
   $('steps').setAttribute('aria-label',lang === 'fr' ? 'Étapes' : 'Steps');
-  $('disclaimer').textContent = DISCLAIMERS[lang];
   updateMode(); combineResults(); renderDocuments();
   showStatus(statusKey,statusKind);
   if (result) renderResults();
@@ -411,7 +414,12 @@ $('cancel').addEventListener('click',() => {
 });
 $('download').addEventListener('click',download);
 $('accept-partial').addEventListener('change',updateDownload);
-$('language').addEventListener('change',event => { lang = event.target.value; translate(); });
+for (const button of $('language').querySelectorAll('button')) button.addEventListener('click',() => {
+  if (button.dataset.lang === lang) return;
+  lang = button.dataset.lang;
+  try { localStorage.setItem(LANGUAGE_KEY,lang); } catch {}
+  translate();
+});
 for (const id of ['search','author-filter','type-filter','page-filter','file-filter']) $(id).addEventListener(id === 'search' ? 'input' : 'change',() => { tablePage = 1; renderTable(); });
 $('reset-filters').addEventListener('click',() => { clearFilters(); renderTable(); });
 $('previous').addEventListener('click',() => { tablePage--; renderTable(); });
