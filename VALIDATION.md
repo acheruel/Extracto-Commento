@@ -1,4 +1,6 @@
-# Validation de la version 0.8.1
+# Validation de la version 0.8.5
+
+Mise à jour UI : 28 octobre 2026. Bouton FR/EN, téléchargement Excel au-dessus du récapitulatif, colonnes compactes, commentaires longs non repliés, singulier/pluriel des cartes, retrait du badge de version, de l’étiquette « Texte estimé » et du bandeau de pied de page. Les moteurs PDF et Excel sont inchangés. Le scénario de régression `tests/smoke.mjs` a été réexécuté avec succès dans Chromium (Linux, Playwright) avec les nouvelles vérifications : absence du badge et du bandeau, bouton FR/EN et choix mémorisé, Excel avant les cartes, colonne Commentaire plus large que Auteur + Date + Type réunis, commentaire de 33 000 caractères affiché en entier, « 1 commentaire exportable / 1 page analysée / 1 auteur », disclaimer conservé dans la cellule A5 de l’Excel. Captures ordinateur et mobile (390 px) inspectées : aucun débordement global. Les essais Chrome et Edge Windows décrits ci-dessous concernent la 0.8.1.
 
 Mise à jour UI : 3 octobre 2026. Palette et composants inspirés de QuickerUnits v0.2, bandeau marine, cartes blanches, accents turquoise et menthe. Les moteurs PDF et Excel sont inchangés. Le scénario de régression a été réexécuté avec succès dans Chrome et Edge. L’interface a aussi été contrôlée en FR/EN, en mode simple et lot, aux largeurs 320, 375, 768, 1024 et 1440 px : aucun débordement global, focus clavier visible. Captures ordinateur et mobile inspectées dans `tests/output/`.
 
@@ -18,7 +20,7 @@ Validation initiale du moteur : 1 octobre 2026. Essais automatiques dans de vrai
 - Filtres, recherche, filtre par fichier, FR/EN, effacement et pagination vérifiés.
 - PDF corrompu au milieu d’un lot : les autres PDF sont conservés et les fichiers suivants analysés. Export bloqué avant acceptation du résultat partiel; fichier omis mentionné dans Excel.
 - Annulation d’un lot : les commentaires des PDF terminés restent disponibles, le fichier actif et les fichiers en attente sont signalés comme annulés. Un nouvel ajout complète le lot et réinitialise l’acceptation du résultat partiel.
-- Titre EXTRACTO COMMENTO, version affichée, mention de traitement local, date et lien GitHub vérifiés. Disclaimer du pied de page comparé à la cellule A5 de l’Excel : identique.
+- Titre EXTRACTO COMMENTO, mention de traitement local, date et lien GitHub vérifiés. Disclaimer de la cellule A5 de l’Excel vérifié (le bandeau du pied de page est retiré depuis la 0.8.5).
 - Fichiers vides sans commentaires, fichiers invalides et corrompus : états distincts.
 - Commentaire au-delà de la capacité Excel : export bloqué sans troncature.
 - Annulation pendant le traitement de 500 pages, puis nouvel import réussi.

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { createFixtures, createLargeFixture, dependency, generated, root } from './fixtures.mjs';
 import { createServer } from '../server.mjs';
-import { cleanText, pdfDate, commentText } from '../format.js';
+import { cleanText, pdfDate, commentText, DISCLAIMERS } from '../format.js';
 
 assert.equal(cleanText(' x\u0000\ny\r '),'x y');
 assert.equal(pdfDate('D:20240229110000+13\'00\''),'2024-02-29');
@@ -18,7 +18,7 @@ const JSZip = dependency('jszip');
 const server = createServer();
 await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
-const browser = await chromium.launch({ channel:process.env.TEST_BROWSER || 'chrome', headless:true });
+const browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath:process.env.CHROME_PATH, headless:true } : { channel:process.env.TEST_BROWSER || 'chrome', headless:true });
 const context = await browser.newContext({ acceptDownloads:true, viewport:{width:1360,height:1050}, locale:'fr-CA' });
 const page = await context.newPage();
 const errors = [], requests = [], writeRequests = [];
@@ -32,10 +32,12 @@ try {
   await page.goto(base);
   await page.waitForFunction(() => !document.querySelector('#choose').disabled);
   assert.equal(await page.locator('h1').innerText(),'EXTRACTO COMMENTO');
-  assert.equal(await page.locator('.version').innerText(),'PDF · v0.8.1');
+  assert.equal(await page.locator('.version').count(),0,'No version badge in the header');
+  assert.equal(await page.locator('#disclaimer').count(),0,'No footer disclaimer banner');
+  assert.equal(await page.locator('#lang-fr').getAttribute('aria-pressed'),'true');
   assert.equal(await page.getByText('DU PDF AU TABLEAU, SIMPLEMENT').count(),0);
   assert.match(await page.locator('.privacy').innerText(),/100 % local[\s\S]*Aucun document n’est envoyé en ligne/);
-  assert.equal(await page.locator('footer time').getAttribute('datetime'),'2026-10-03');
+  assert.equal(await page.locator('footer time').getAttribute('datetime'),'2026-10-28');
   assert.equal(await page.locator('.github-link').getAttribute('href'),'https://github.com/acheruel/Extracto-Commento');
   await page.screenshot({ path:path.join(root,'tests','output','start.png'),fullPage:true });
   await openFile('annotations.pdf');
@@ -46,6 +48,11 @@ try {
   assert.match(await page.locator('#rows').innerText(),/Date invalide/);
   assert.match(await page.locator('#rows').innerText(),/Hidden note retained/);
   assert.equal(await page.locator('#rows img').count(),0);
+  assert.equal(await page.locator('#rows .tag').filter({hasText:'Texte estimé'}).count(),0,'No per-row estimated tag');
+  assert.equal(await page.locator('#rows details').count(),0,'Long comments are never folded');
+  assert.ok(await page.evaluate(() => document.querySelector('.export-bar').compareDocumentPosition(document.querySelector('.stats')) & Node.DOCUMENT_POSITION_FOLLOWING),'Excel download sits above the summary');
+  const widths = await page.evaluate(() => Object.fromEntries(['author','date','type','comment'].map(kind => [kind,document.querySelector(`#rows .${kind}-cell`).getBoundingClientRect().width])));
+  assert.ok(widths.comment > 2*(widths.author+widths.date+widths.type),`Comment column keeps most of the width: ${JSON.stringify(widths)}`);
   assert.equal(await page.evaluate(() => window.pwned),undefined);
   await page.locator('#diagnostics summary').click();
   assert.match(await page.locator('#warning-list').innerText(),/Square \(1\)/);
@@ -75,15 +82,17 @@ try {
     const index = Number(parser.parseFromString(sheet,'text/xml').querySelector('c[r="A5"] v').textContent);
     return parser.parseFromString(strings,'text/xml').querySelectorAll('si')[index].textContent;
   },{sheet,strings});
-  assert.equal(disclaimer,await page.locator('#disclaimer').innerText(),'Footer and Excel disclaimer must match exactly');
+  assert.equal(disclaimer,DISCLAIMERS.fr,'Excel keeps the disclaimer');
   await page.locator('#reset-filters').click();
-  await page.locator('#language').selectOption('en');
+  await page.locator('#lang-en').click();
   assert.equal(await page.locator('html').getAttribute('lang'),'en');
+  assert.equal(await page.locator('#lang-en').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.evaluate(() => localStorage.getItem('extracto-commento-language')),'en');
   assert.match(await page.locator('#rows').innerText(),/Highlighted text/);
   await page.locator('#type-filter').selectOption('Text');
   assert.equal(await page.locator('#rows tr').count(),4);
   await page.locator('#reset-filters').click();
-  await page.locator('#language').selectOption('fr');
+  await page.locator('#lang-fr').click();
   await page.screenshot({ path:path.join(root,'tests','output','comments.png'),fullPage:true });
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({ path:path.join(root,'tests','output','mobile.png'),fullPage:true });
@@ -100,6 +109,8 @@ try {
   await openFile('corrupt.pdf');
   assert.match(await page.locator('#status').innerText(),/corrompu/);
   await openFile('long.pdf');
+  assert.equal(await page.locator('.stats').innerText(),'1\ncommentaire exportable\n1\npage analysée\n1\nauteur');
+  assert.equal((await page.locator('#rows .comment-copy').innerText()).length,33000,'Long comment shown in full');
   await page.locator('#download').click();
   assert.match(await page.locator('#status').innerText(),/32 767/);
   // Inject PDF.js failures to verify both partial-result paths deterministically.
@@ -140,6 +151,7 @@ try {
   await page.locator('#demo').click();
   await page.waitForFunction(() => document.querySelector('#count').textContent === '5' && document.querySelector('#progress-card').hidden);
   assert.equal(await page.locator('#rows tr').count(),5);
+  assert.equal(await page.locator('.stats').innerText(),'5\ncommentaires exportables\n1\npage analysée\n2\nauteurs');
   await page.screenshot({path:path.join(root,'tests','output','demo.png'),fullPage:true});
   // Verify cancellation while sequential extraction is active.
   await page.locator('#file').setInputFiles(path.join(generated,'pages.pdf'));
@@ -209,10 +221,10 @@ try {
   assert.match(await batchZip.file('xl/workbook.xml').async('string'),/name="Fichiers"/);
   assert.match(await batchZip.file('xl/worksheets/sheet2.xml').async('string'),/<row r="4"/);
   await page.locator('#reset-filters').click();
-  await page.locator('#language').selectOption('en');
+  await page.locator('#lang-en').click();
   assert.match(await page.locator('#choose').innerText(),/Add PDFs/);
   assert.match(await page.locator('.privacy').innerText(),/No documents are sent online/);
-  await page.locator('#language').selectOption('fr');
+  await page.locator('#lang-fr').click();
   await page.screenshot({path:path.join(root,'tests','output','batch.png'),fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:path.join(root,'tests','output','batch-mobile.png'),fullPage:true});
@@ -292,7 +304,7 @@ try {
   assert.deepEqual(errors,[]);
   assert.ok(requests.every(url => url.startsWith(base) || url.startsWith('blob:') || url.startsWith('data:')),'No external requests');
   assert.deepEqual(writeRequests,[],'No upload or other HTTP write request');
-  const summary = {date:new Date().toISOString(),version:'0.8.1',browser:await browser.version(),checks:'annotations, text geometry, literal HTML/formulas, Excel contents, full export with filters, FR/EN, mobile overflow, empty/corrupt files, long-cell block, partial extraction acknowledgement and Excel warning, demo, cancellation, 500 pages, local reference PDF, local-only requests without uploads, multi-file selection and successive drops, combined workbook with sources, corrupt batch continuation, batch cancellation retaining completed files, shared footer/Excel disclaimer',sourceCount,stress};
+  const summary = {date:new Date().toISOString(),version:'0.8.5',browser:await browser.version(),checks:'annotations, text geometry, literal HTML/formulas, Excel contents, full export with filters, FR/EN, mobile overflow, empty/corrupt files, long-cell block, partial extraction acknowledgement and Excel warning, demo, cancellation, 500 pages, local reference PDF, local-only requests without uploads, multi-file selection and successive drops, combined workbook with sources, corrupt batch continuation, batch cancellation retaining completed files, Excel disclaimer, EN/FR toggle with saved choice, singular/plural summary cards, unfolded comments, compact columns',sourceCount,stress};
   await writeFile(path.join(root,'tests','output','validation.json'),JSON.stringify(summary,null,2));
   await writeFile(path.join(root,'tests','output',`validation-${process.env.TEST_BROWSER || 'chrome'}.json`),JSON.stringify(summary,null,2));
   console.log('PASS: browser extraction, interface, Excel and local-only processing');
